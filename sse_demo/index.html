@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="sk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SSE demo</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 40rem;
+        margin: 3rem auto;
+        padding: 0 1rem;
+        color: #222;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      #status {
+        font-weight: 600;
+      }
+      #status.online {
+        color: #0a7d33;
+      }
+      #status.offline {
+        color: #c0392b;
+      }
+      #time {
+        font-size: 3rem;
+        font-variant-numeric: tabular-nums;
+        margin: 1rem 0;
+      }
+      #log {
+        padding-left: 2rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.9rem;
+      }
+      #log li {
+        padding: 0.2rem 0;
+        border-bottom: 1px solid #eee;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Aktuálne dáta zo servera (SSE)</h1>
+    <p>
+      Connection status: <span id="status" class="offline">connecting…</span>
+    </p>
+    <div id="time">—</div>
+    <h2>Recieved data</h2>
+    <ol id="log" reversed></ol>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      const timeEl = document.getElementById("time");
+      const logEl = document.getElementById("log");
+
+      const source = new EventSource("http://localhost:3000/events");
+
+      source.onopen = () => {
+        statusEl.textContent = "online";
+        statusEl.className = "online";
+      };
+
+      // SSE správa je len notifikácia, že sú nové dáta.
+      // Samotné dáta si klient stiahne z /updates.
+      source.onmessage = () => {
+        const li = document.createElement("li");
+        li.textContent = "update notification received";
+        logEl.prepend(li);
+
+        fetch("http://localhost:3000/updates", {
+          headers: { Authorization: "sse-test" },
+        })
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.text();
+          })
+          .then((data) => {
+            timeEl.textContent = data;
+
+            const li = document.createElement("li");
+            li.textContent = data;
+            logEl.prepend(li);
+          })
+          .catch(() => {
+            timeEl.textContent = "fetch failed";
+          });
+      };
+
+      // EventSource tries to reconnect automatically, no work on JS.
+      // all is handled by browser and backend
+      source.onerror = () => {
+        statusEl.textContent = "offline – reconnecting…";
+        statusEl.className = "offline";
+      };
+    </script>
+  </body>
+</html>

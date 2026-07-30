@@ -12,7 +12,7 @@ nohup node server.js &> /dev/null & # zahod vystup, kratsie
 kill $(lsof -ti:3000)
 
 # vypis co bezi na 3000 + command (LISTEN je ten proces, co vysiela)
-ps -o command -p $(lsof -ti:3000)
-ps -o command -p $(lsof -ti:3000 -sTCP:LISTEN)
+ps -o pid,command -p $(lsof -ti:3000)
+ps -o pid,command -p $(lsof -ti:3000 -sTCP:LISTEN)
 
 ```

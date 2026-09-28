@@ -1,7 +1,10 @@
 // make affine && ./affine
 #include <iostream>
+#include <stdexcept>
 #include <string>
 using namespace std;
+
+constexpr int M = 27; // A-Z + space
 
 int ctoi(char c) 
 {
@@ -16,21 +19,44 @@ char itoc(int n)
     return ' ';
 }
 
+int mod(int x)
+{
+    return ((x % M) + M) % M;
+}
+
 int add(int a, int b)
 {
-    return (a + b) % 27;
+    return mod(a + b);
 }
 
 int mul(int a, int b)
 {
-    int r = (a * b) % 27;
+    return mod(a * b);
+}
 
-    return r < 0 ? r + 27 : r;
+int gcd(int a, int b)
+{
+    while (b != 0)
+    {
+        int t = a % b;
+        a = b;
+        b = t;
+    }
+
+    return a;
+}
+
+void check_key(int k1)
+{
+    // k1 must be coprime with M, otherwise it has no inverse
+    if (gcd(mod(k1), M) != 1) throw invalid_argument("k1 must be coprime with " + to_string(M));
 }
 
 int inv(int a)
 {
-    for (int i = 0; i < 27; i++)
+    check_key(a);
+
+    for (int i = 0; i < M; i++)
     {
         if (mul(a, i) == 1) return i;
     }
@@ -38,14 +64,15 @@ int inv(int a)
     return 0;
 }
 
-string affine_encrypt(int k1, int k2, string plaintext)
+string affine_encrypt(int k1, int k2, const string& plaintext)
 {
-    // y = x * k1 + k2 mod 27
+    // y = x * k1 + k2 mod M
+    check_key(k1);
     string result = "";
     
-    for (int i = 0; i < plaintext.length(); i++)
+    for (char c : plaintext)
     {
-        int local_n = ctoi(plaintext[i]);
+        int local_n = ctoi(c);
         int cipher_n = add(mul(k1, local_n), k2);
         result += itoc(cipher_n);
     }
@@ -53,22 +80,21 @@ string affine_encrypt(int k1, int k2, string plaintext)
     return result;
 }
 
-string affine_decrypt(int k1, int k2, string ciphertext)
+string affine_decrypt(int k1, int k2, const string& ciphertext)
 {
-    // x = k1' * (y - k2) mod 27
+    // x = k1' * (y - k2) mod M
     string plaintext = "";
     int k1c = inv(k1);
 
-    for (int i = 0; i < ciphertext.length(); i++)
+    for (char c : ciphertext)
     {
-        int local_n = ctoi(ciphertext[i]);
+        int local_n = ctoi(c);
         int plain_n = mul(k1c, local_n - k2);
         plaintext += itoc(plain_n);
     }
 
     return plaintext;
 }
-
 int main() {
     string plaintext = "TOTO JE TAJNA SPRAVA";
     string ciphertext = "";
@@ -87,7 +113,7 @@ int main() {
     int possible_k1[18] = {1, 2, 4, 5, 7, 8, 10, 11, 13, 14, 16, 17, 19, 20, 22, 23, 25, 26};
 
     // for (int k1 : possible_k1) {
-    //     for (int k2 = 0; k2 <= 27; k2++) {
+    //     for (int k2 = 0; k2 < M; k2++) {
     //         cout << affine_decrypt(k1, k2, code) << " " << k1 << " " << k2 << "\n";
     //     }
     // }

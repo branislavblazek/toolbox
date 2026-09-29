@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <array>
+#include <unordered_map>
 using namespace std;
 
 constexpr int M = 26; // A-Z
@@ -105,6 +106,77 @@ char get_coincidence_index(const string& text, const string& lang)
     return best_letter_index;
 }
 
+vector<int> vigenere_trigram_distances(const string& ciphertext)
+{
+    unordered_map<string, vector<int>> trigram_positions;
+    vector<int> distances;
+
+    for (int i = 0; i < ciphertext.size() - 2; i++)
+    {
+        string trigram = ciphertext.substr(i, 3);
+        trigram_positions[trigram].push_back(i);
+    }
+
+    for (const auto& pair : trigram_positions)
+    {
+        const string& trigram = pair.first;
+        const vector<int>& positions = pair.second;
+
+        if (positions.size() < 2) continue;
+
+        for (int i = 0; i < positions.size() - 1; i++)
+        {
+            int distance = positions[i + 1] - positions[i];
+            distances.push_back(distance);
+        }
+    }
+
+    return distances;
+}
+
+int vigenere_guess_key_length(const vector<int>& distances)
+{
+    const int min_key_length = 3;
+    const int max_key_length = 25;
+    vector<int> scores(max_key_length + 1, 0);
+
+    for (int distance : distances)
+    {
+        for (int i = min_key_length; i <= max_key_length; i++)
+        {
+            if (distance % i == 0)
+                scores[i]++;
+        }
+    }
+
+    int best_score = 0;
+    int best_key_length = 0;
+
+    for (int i = min_key_length; i <= max_key_length; i++)
+    {
+        if (scores[i] > best_score) 
+        {
+            best_score = scores[i];
+            best_key_length = i;
+        }
+    }
+
+    return best_key_length;
+}
+
+string vigenere_crack_key(const string& ciphertext, int password_length)
+{
+    vector<string> groups = split_text(ciphertext, password_length);
+    string result = "";
+
+    for (const string& g : groups) {
+        char index = get_coincidence_index(g, "sk");
+        result += itoc(index);
+    }
+
+    return result;
+}
+
 string vigenere_encrypt(const string& key, const string& plaintext)
 {
     int pwdIndex = 0;
@@ -149,19 +221,6 @@ string vigenere_decrypt(const string& key, const string& ciphertext)
     return result;
 }
 
-string vigenere_crack_key(const string& ciphertext, int password_length)
-{
-    vector<string> groups = split_text(ciphertext, password_length);
-    string result = "";
-
-    for (const string& g : groups) {
-        char index = get_coincidence_index(g, "sk");
-        result += itoc(index);
-    }
-
-    return result;
-}
-
 int main()
 {
     string plaintext = "TOTO JE TAJNA SPRAVA";
@@ -175,17 +234,15 @@ int main()
     cout << plaintext << "\n--\n";
 
     // TASK: Break the code!
-    ciphertext = "UYCKTLTAERJNNJBDAUOUYGIJNNZRCRSQOHGUOCSWSRSQOQOIYRODRJHNPYOEDLDXDVPWOZHRVFGTYACEJLRWOAZRVFQQZUOTOCFNFLFNNJBNHVHNXAIERVNWYJVTOKCEYJVJBLQNDHQQTLZNGYOONHHNLLUAAMBJSTSMZLFXUHGLIPZJTPBDRJHNPYOEDLDXDVPWOZHRDCCSIJOSTYCSIJNWARCENHNJKSOMETSAAUWWACFQNPHNNHVXDUMPEUSAAACASSCEDHBNHVXJZFYJ";
-    key = vigenere_crack_key(ciphertext, 4);
-    plaintext = vigenere_decrypt(key, ciphertext);
+    ciphertext              = "UYCKTLTAERJNNJBDAUOUYGIJNNZRCRSQOHGUOCSWSRSQOQOIYRODRJHNPYOEDLDXDVPWOZHRVFGTYACEJLRWOAZRVFQQZUOTOCFNFLFNNJBNHVHNXAIERVNWYJVTOKCEYJVJBLQNDHQQTLZNGYOONHHNLLUAAMBJSTSMZLFXUHGLIPZJTPBDRJHNPYOEDLDXDVPWOZHRDCCSIJOSTYCSIJNWARCENHNJKSOMETSAAUWWACFQNPHNNHVXDUMPEUSAAACASSCEDHBNHVXJZFYJ";
+    vector<int> distances   = vigenere_trigram_distances(ciphertext);
+    int key_length          = vigenere_guess_key_length(distances);
+    key                     = vigenere_crack_key(ciphertext, key_length);
+    plaintext               = vigenere_decrypt(key, ciphertext);
     // key = AHOJ
     // plaintext = UROBTE FREKVENCNU ANALYZU ANGLICKEHO A SLOVENSKEHO JAZYKA URCTE PRAVDEPODOBNOSTI VYSKYTOV JEDNOTLIVYCH ZNAKOV REFERENCNEHO TEXTU V ROZNYCH KODOVYCH ABECEDACH TELEGRAF NA TELEGRAF NA S MEDZEROU ASCII LATIN URCTE PRAVDEPODOBNOSTI DVOJIC AJ TROJIC ZNAKOV NA ZAKLADE MERANI NAVRHNITE NAHODNY GENERATOR SLOV DANEHOJAZYKA
 
     cout << plaintext << "\n";
-
-    // TODO:
-    // [ ] filter input text (uppercase, spaces,...)
-    // [ ] break the cipher into "trojice"
     
     return 0;
 }

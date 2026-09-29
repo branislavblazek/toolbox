@@ -83,17 +83,17 @@ string affine_encrypt(int k1, int k2, const string& plaintext)
 string affine_decrypt(int k1, int k2, const string& ciphertext)
 {
     // x = k1' * (y - k2) mod M
-    string plaintext = "";
+    string result = "";
     int k1c = inv(k1);
 
     for (char c : ciphertext)
     {
         int local_n = ctoi(c);
         int plain_n = mul(k1c, local_n - k2);
-        plaintext += itoc(plain_n);
+        result += itoc(plain_n);
     }
 
-    return plaintext;
+    return result;
 }
 int main() {
     string plaintext = "TOTO JE TAJNA SPRAVA";
@@ -106,7 +106,7 @@ int main() {
     cout << ciphertext << "\n";
 
     string original = affine_decrypt(k1, k2, ciphertext);
-    cout << original << "\n\n\n";
+    cout << original << "\n--\n";
 
     // TASK: break the code!
     string code = "LIYGTOGDPOAUPDFQNVPVDAQV";

@@ -87,7 +87,7 @@ array<double, M> get_frequencies(const string& text)
     return frequencies;
 }
 
-char get_coincidence_index(const string& text, const string& lang)
+int get_best_shift(const string& text, const string& lang)
 {
     static constexpr double sk_letter_frequencies[M] = {0.11, 0.01, 0.04, 0.04, 0.08, 0.0, 0.0, 0.02, 0.08, 0.02, 0.04, 0.04, 0.03, 0.07, 0.1, 0.03, 0.0, 0.05, 0.06, 0.05, 0.03, 0.05, 0.0, 0.0, 0.03, 0.03};
     static constexpr double en_letter_frequencies[M] = {0.08, 0.01, 0.03, 0.04, 0.12, 0.02, 0.02, 0.06, 0.07, 0.0, 0.01, 0.04, 0.03, 0.07, 0.08, 0.02, 0.0, 0.06, 0.06, 0.09, 0.03, 0.01, 0.02, 0.0, 0.02, 0.0};
@@ -128,7 +128,7 @@ vector<int> vigenere_trigram_distances(const string& ciphertext)
     unordered_map<string, vector<int>> trigram_positions;
     vector<int> distances;
 
-    for (int i = 0; i < clean.size() - 2; i++)
+    for (size_t i = 0; i < clean.size() - 2; i++)
     {
         trigram_positions[clean.substr(i, 3)].push_back(i);
     }
@@ -140,7 +140,7 @@ vector<int> vigenere_trigram_distances(const string& ciphertext)
 
         if (positions.size() < 2) continue;
 
-        for (int i = 0; i < positions.size() - 1; i++)
+        for (size_t i = 0; i < positions.size() - 1; i++)
         {
             int distance = positions[i + 1] - positions[i];
             distances.push_back(distance);
@@ -185,7 +185,7 @@ string vigenere_crack_key(const string& ciphertext, int password_length, const s
     string result = "";
 
     for (const string& g : groups) {
-        char index = get_coincidence_index(g, lang);
+        int index = get_best_shift(g, lang);
         result += itoc(index);
     }
 
@@ -194,8 +194,8 @@ string vigenere_crack_key(const string& ciphertext, int password_length, const s
 
 string vigenere_encrypt(const string& key, const string& plaintext)
 {
-    int pwdIndex = 0;
-    int pwdLen = key.size();
+    int pwd_index = 0;
+    int pwd_size = key.size();
     string result = "";
 
     for (const char c : plaintext)
@@ -206,8 +206,8 @@ string vigenere_encrypt(const string& key, const string& plaintext)
             continue;
         }
 
-        char cipher_n = add(ctoi(c), ctoi(key[pwdIndex]));
-        pwdIndex = (pwdIndex + 1) % pwdLen;
+        int cipher_n = add(ctoi(c), ctoi(key[pwd_index]));
+        pwd_index = (pwd_index + 1) % pwd_size;
         result += itoc(cipher_n);
     }
 
@@ -216,8 +216,8 @@ string vigenere_encrypt(const string& key, const string& plaintext)
 
 string vigenere_decrypt(const string& key, const string& ciphertext)
 {
-    int pwdIndex = 0;
-    int pwdLen = key.size();
+    int pwd_index = 0;
+    int pwd_size = key.size();
     string result = "";
 
     for (const char c : ciphertext)
@@ -228,8 +228,8 @@ string vigenere_decrypt(const string& key, const string& ciphertext)
             continue;
         }
 
-        char plain_n = sub(ctoi(c), ctoi(key[pwdIndex]));
-        pwdIndex = (pwdIndex + 1) % pwdLen;
+        int plain_n = sub(ctoi(c), ctoi(key[pwd_index]));
+        pwd_index = (pwd_index + 1) % pwd_size;
         result += itoc(plain_n);
     }
 

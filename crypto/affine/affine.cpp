@@ -95,6 +95,7 @@ string affine_decrypt(int k1, int k2, const string& ciphertext)
 
     return result;
 }
+
 int main() {
     string plaintext = "TOTO JE TAJNA SPRAVA";
     string ciphertext = "";
